@@ -1,0 +1,176 @@
+class Livro {
+    constructor(titulo, autor) {
+        this.titulo = titulo;
+        this.autor = autor;
+        this.disponibilidade = true;  // Se o livro está disponível ou não
+    }
+}
+
+class Usuario {
+    constructor(nome, email, telefone) {
+        this.nome = nome;
+        this.email = email;
+        this.telefone = telefone;
+        this.livrosEmprestados = [];  // Lista de livros que o usuário pegou emprestado
+    }
+}
+
+class Emprestimo {
+    constructor(livro, usuario) {
+        this.livro = livro;
+        this.usuario = usuario;
+        this.dataEmprestimo = new Date();
+        this.dataDevolucao = new Date(this.dataEmprestimo);
+        this.dataDevolucao.setDate(this.dataEmprestimo.getDate() + 7); // Empréstimo de 7 dias
+    }
+
+    calcularMulta() {
+        const hoje = new Date();
+        const atraso = (hoje - this.dataDevolucao) / (1000 * 60 * 60 * 24); // Converte para dias
+        if (atraso > 0) {
+            return atraso * 1;  // Multa de R$1 por dia
+        }
+        return 0;
+    }
+}
+
+class Biblioteca {
+    constructor() {
+        this.livros = [];
+        this.usuarios = [];
+        this.emprestimos = [];
+    }
+
+    // Cadastrar um livro
+    cadastrarLivro(titulo, autor) {
+        const livro = new Livro(titulo, autor);
+        this.livros.push(livro);
+    }
+
+    // Cadastrar um usuário
+    cadastrarUsuario(nome, email, telefone) {
+        const usuario = new Usuario(nome, email, telefone);
+        this.usuarios.push(usuario);
+    }
+
+    // Realizar empréstimo de um livro
+    realizarEmprestimo(livro, usuario) {
+        if (livro.disponibilidade) {
+            const emprestimo = new Emprestimo(livro, usuario);
+            this.emprestimos.push(emprestimo);
+            livro.disponibilidade = false;
+            usuario.livrosEmprestados.push(livro);
+            console.log(`Empréstimo realizado com sucesso! Livro: ${livro.titulo}, Usuário: ${usuario.nome}`);
+        } else {
+            console.log(`O livro '${livro.titulo}' não está disponível para empréstimo.`);
+        }
+    }
+
+    // Registrar devolução de um livro
+    registrarDevolucao(livro, usuario) {
+        for (let i = 0; i < this.emprestimos.length; i++) {
+            const emprestimo = this.emprestimos[i];
+            if (emprestimo.livro === livro && emprestimo.usuario === usuario) {
+                const multa = emprestimo.calcularMulta();
+                if (multa > 0) {
+                    console.log(`O livro '${livro.titulo}' foi devolvido com ${multa} dias de atraso. Multa de R$ ${multa.toFixed(2)}.`);
+                } else {
+                    console.log(`O livro '${livro.titulo}' foi devolvido no prazo.`);
+                }
+                emprestimo.livro.disponibilidade = true;
+                usuario.livrosEmprestados.splice(usuario.livrosEmprestados.indexOf(livro), 1);
+                this.emprestimos.splice(i, 1);
+                break;
+            }
+        }
+    }
+
+    // Relatórios
+
+    relatorioLivrosDisponiveis() {
+        console.log("Livros Disponíveis:");
+        this.livros.forEach(livro => {
+            if (livro.disponibilidade) {
+                console.log(`Título: ${livro.titulo}, Autor: ${livro.autor}`);
+            }
+        });
+    }
+
+    relatorioLivrosEmprestados() {
+        console.log("Livros Emprestados:");
+        this.livros.forEach(livro => {
+            if (!livro.disponibilidade) {
+                console.log(`Título: ${livro.titulo}, Autor: ${livro.autor}`);
+            }
+        });
+    }
+
+    relatorioUsuariosCadastrados() {
+        console.log("Usuários Cadastrados:");
+        this.usuarios.forEach(usuario => {
+            console.log(`Nome: ${usuario.nome}, Email: ${usuario.email}, Telefone: ${usuario.telefone}`);
+        });
+    }
+
+    relatorioUsuariosComEmprestimos() {
+        console.log("Usuários com Livros Emprestados:");
+        this.usuarios.forEach(usuario => {
+            if (usuario.livrosEmprestados.length > 0) {
+                console.log(`Nome: ${usuario.nome}`);
+                usuario.livrosEmprestados.forEach(livro => {
+                    console.log(`  - Livro: ${livro.titulo}`);
+                });
+            }
+        });
+    }
+
+    relatorioEmprestimosAtivos() {
+        console.log("Empréstimos Ativos:");
+        this.emprestimos.forEach(emprestimo => {
+            console.log(`Livro: ${emprestimo.livro.titulo}, Usuário: ${emprestimo.usuario.nome}, Data do Empréstimo: ${emprestimo.dataEmprestimo.toLocaleDateString()}, Data de Devolução: ${emprestimo.dataDevolucao.toLocaleDateString()}`);
+        });
+    }
+
+    relatorioEmprestimosConcluidos() {
+        console.log("Empréstimos Concluídos:");
+        this.emprestimos.forEach(emprestimo => {
+            if (emprestimo.livro.disponibilidade) {
+                console.log(`Livro: ${emprestimo.livro.titulo}, Usuário: ${emprestimo.usuario.nome}, Data de Empréstimo: ${emprestimo.dataEmprestimo.toLocaleDateString()}, Data de Devolução: ${emprestimo.dataDevolucao.toLocaleDateString()}`);
+            }
+        });
+    }
+
+    relatorioEmprestimosComMulta() {
+        console.log("Empréstimos com Multa:");
+        this.emprestimos.forEach(emprestimo => {
+            const multa = emprestimo.calcularMulta();
+            if (multa > 0) {
+                console.log(`Livro: ${emprestimo.livro.titulo}, Usuário: ${emprestimo.usuario.nome}, Multa: R$ ${multa.toFixed(2)}`);
+            }
+        });
+    }
+}
+
+// Exemplo de uso do sistema
+const biblioteca = new Biblioteca();
+biblioteca.cadastrarLivro("O Hobbit", "J.R.R. Tolkien");
+biblioteca.cadastrarUsuario("João", "joao@email.com", "123456789");
+
+const livro = biblioteca.livros[0];
+const usuario = biblioteca.usuarios[0];
+
+biblioteca.realizarEmprestimo(livro, usuario);
+
+// Simula um atraso na devolução
+setTimeout(() => {
+    biblioteca.registrarDevolucao(livro, usuario);
+
+    // Relatórios
+    biblioteca.relatorioLivrosDisponiveis();
+    biblioteca.relatorioLivrosEmprestados();
+    biblioteca.relatorioUsuariosCadastrados();
+    biblioteca.relatorioUsuariosComEmprestimos();
+    biblioteca.relatorioEmprestimosAtivos();
+    biblioteca.relatorioEmprestimosConcluidos();
+    biblioteca.relatorioEmprestimosComMulta();
+}, 10000);  // Atraso simulado de 10 segundos para exemplificação
